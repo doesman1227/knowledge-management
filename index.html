@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ナレッジマネジメント ｜ m-note</title>
+<meta name="description" content="アイデアは「問い × 静けさ」から生まれる。散歩で浮かんだアイデアをAIと育て、Obsidianに蓄積し、実行につなげる個人ナレッジマネジメントの設計ノート。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💧</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600&family=Noto+Serif+JP:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #eff3f5;
+    --paper: #ffffff;
+    --ink: #1c2b33;
+    --ink-soft: #4c6470;
+    --ink-faint: #8aa3ad;
+    --water: #1f7a8c;
+    --water-soft: #7fb6c2;
+    --line: #d5e0e4;
+    --water-wash: rgba(31, 122, 140, 0.06);
+    --shadow: 0 1px 2px rgba(28, 43, 51, 0.04), 0 8px 24px rgba(28, 43, 51, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0d171c;
+      --paper: #14222a;
+      --ink: #dce8ec;
+      --ink-soft: #9db4bd;
+      --ink-faint: #5f7a85;
+      --water: #6fc1cf;
+      --water-soft: #35707e;
+      --line: #24363f;
+      --water-wash: rgba(111, 193, 207, 0.07);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    font-size: 16px;
+    line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "palt";
+  }
+
+  .serif {
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header { padding: 28px 0; }
+  header .wrap {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .wordmark {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+  .wordmark span { color: var(--water); }
+  .home-link {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1px;
+  }
+  .home-link:hover { color: var(--water); border-color: var(--water-soft); }
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 72px 0 88px;
+  }
+  .hero .wrap {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 32px;
+  }
+  .hero-eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--water);
+    margin: 0 0 20px;
+    font-weight: 600;
+  }
+  .hero h1 {
+    font-size: clamp(1.7rem, 4.6vw, 2.6rem);
+    line-height: 1.6;
+    font-weight: 600;
+    margin: 0 0 24px;
+    letter-spacing: 0.02em;
+    text-wrap: balance;
+  }
+  .hero p.lede {
+    color: var(--ink-soft);
+    max-width: 34em;
+    margin: 0;
+  }
+  .tategaki {
+    writing-mode: vertical-rl;
+    font-size: clamp(1.15rem, 3vw, 1.5rem);
+    letter-spacing: 0.42em;
+    color: var(--water);
+    border-left: 1px solid var(--line);
+    padding-left: 28px;
+    align-self: stretch;
+    display: flex;
+    align-items: flex-start;
+    flex: none;
+    font-weight: 500;
+  }
+  .ripples {
+    position: absolute;
+    right: -180px;
+    top: -180px;
+    width: 560px;
+    height: 560px;
+    pointer-events: none;
+    opacity: 0.55;
+  }
+  .ripples circle {
+    fill: none;
+    stroke: var(--water-soft);
+    stroke-width: 1;
+    transform-origin: center;
+    animation: ripple 9s linear infinite;
+    opacity: 0;
+  }
+  .ripples circle:nth-child(2) { animation-delay: 3s; }
+  .ripples circle:nth-child(3) { animation-delay: 6s; }
+  @keyframes ripple {
+    0%   { transform: scale(0.25); opacity: 0; }
+    12%  { opacity: 0.7; }
+    100% { transform: scale(1); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ripples circle { animation: none; opacity: 0.35; transform: scale(0.7); }
+    .ripples circle:nth-child(2) { transform: scale(0.45); }
+    .ripples circle:nth-child(3) { transform: scale(0.95); }
+  }
+
+  section { padding: 56px 0; }
+  section + section { border-top: 1px solid var(--line); }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.24em;
+    color: var(--water);
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+  h2 {
+    font-size: 1.45rem;
+    font-weight: 600;
+    line-height: 1.6;
+    margin: 0 0 20px;
+    letter-spacing: 0.02em;
+    text-wrap: balance;
+  }
+  .muted { color: var(--ink-soft); }
+  p { margin: 0 0 1.2em; }
+  p:last-child { margin-bottom: 0; }
+
+  .observation {
+    background: var(--paper);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    padding: 28px 32px;
+    margin-top: 28px;
+    border-left: 3px solid var(--water);
+  }
+  .observation p { margin: 0; }
+  .observation .serif {
+    font-size: 1.08rem;
+    line-height: 2;
+  }
+  .observation .note {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .scenes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .scene {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .scene b {
+    font-weight: 600;
+    font-size: 0.98rem;
+  }
+  .scene span {
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    line-height: 1.7;
+  }
+
+  .commons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .common {
+    background: var(--water-wash);
+    border-radius: 6px;
+    padding: 22px 24px;
+  }
+  .common h3 {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--water);
+    letter-spacing: 0.12em;
+  }
+  .common ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+  .common li {
+    padding: 4px 0 4px 1.1em;
+    position: relative;
+  }
+  .common li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.95em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--water-soft);
+  }
+  .thought-note {
+    margin-top: 20px;
+    padding: 22px 26px;
+    background: var(--paper);
+    border-radius: 6px;
+    border: 1px dashed var(--water-soft);
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+  .thought-note b { color: var(--ink); font-weight: 600; }
+
+  .hypothesis {
+    text-align: center;
+    padding: 80px 0;
+  }
+  .hypothesis .formula {
+    font-size: clamp(1.9rem, 6vw, 3rem);
+    letter-spacing: 0.18em;
+    color: var(--water);
+    margin: 28px 0;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .hypothesis .formula .x {
+    color: var(--ink-faint);
+    font-size: 0.7em;
+    margin: 0 0.35em;
+  }
+  .hypothesis p.sub {
+    color: var(--ink-soft);
+    max-width: 32em;
+    margin: 0 auto;
+    text-wrap: balance;
+  }
+
+  .flow {
+    list-style: none;
+    margin: 32px 0 0;
+    padding: 0;
+    counter-reset: step;
+  }
+  .flow li {
+    counter-increment: step;
+    position: relative;
+    padding: 0 0 26px 62px;
+  }
+  .flow li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 0.1em;
+    width: 40px;
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    color: var(--water);
+    font-variant-numeric: tabular-nums;
+  }
+  .flow li::after {
+    content: "";
+    position: absolute;
+    left: 46px;
+    top: 1.9em;
+    bottom: 0.4em;
+    width: 1px;
+    background: var(--line);
+  }
+  .flow li:last-child::after { display: none; }
+  .flow b {
+    font-weight: 600;
+    display: block;
+    line-height: 1.7;
+  }
+  .flow span {
+    display: block;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .flow li.pivot b { color: var(--water); }
+
+  .roles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .role {
+    background: var(--paper);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    padding: 26px 28px;
+  }
+  .role h3 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .role .tag {
+    font-size: 0.78rem;
+    color: var(--water);
+    letter-spacing: 0.14em;
+    margin-bottom: 14px;
+  }
+  .role ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-soft);
+    font-size: 0.93rem;
+  }
+  .role li {
+    padding: 5px 0;
+    border-top: 1px solid var(--line);
+  }
+  .role li:first-child { border-top: none; }
+
+  .system {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .phone {
+    flex: none;
+    width: 150px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--paper);
+    padding: 26px 14px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .phone .btn {
+    background: var(--water);
+    color: var(--ground);
+    border-radius: 12px;
+    padding: 14px 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+  }
+  .phone .btn.ghost {
+    background: var(--water-wash);
+    color: var(--water);
+    border: 1px solid var(--water-soft);
+  }
+  .phone .cap {
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    margin-top: 2px;
+    letter-spacing: 0.08em;
+  }
+  .system-copy { flex: 1 1 320px; }
+  .system-copy p { color: var(--ink-soft); }
+  .system-copy b { color: var(--ink); }
+
+  .loop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .loop-step {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px 20px;
+  }
+  .loop-step .who {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    padding: 2px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .who.you {
+    background: var(--water-wash);
+    color: var(--water);
+    border: 1px solid var(--water-soft);
+  }
+  .who.auto {
+    background: transparent;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+  }
+  .loop-step b {
+    display: block;
+    font-weight: 600;
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+  .loop-step span {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  .folders {
+    margin: 28px 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line);
+  }
+  .folders li {
+    border-bottom: 1px solid var(--line);
+    padding: 12px 4px;
+    display: flex;
+    gap: 18px;
+    align-items: baseline;
+    font-size: 0.93rem;
+  }
+  .folders code {
+    flex: none;
+    width: 118px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.82rem;
+    color: var(--water);
+    letter-spacing: 0.02em;
+  }
+  .folders span { color: var(--ink-soft); }
+
+  .themes {
+    margin: 28px 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line);
+  }
+  .themes li {
+    border-bottom: 1px solid var(--line);
+    padding: 14px 4px;
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    font-size: 0.95rem;
+  }
+  .themes .q {
+    flex: none;
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    color: var(--water-soft);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 44px 0 64px;
+    color: var(--ink-faint);
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+  }
+  footer .wrap {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  footer a {
+    color: var(--ink-faint);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1px;
+  }
+  footer a:hover { color: var(--water); border-color: var(--water-soft); }
+  .disc {
+    margin-top: 16px;
+    font-size: 0.74rem;
+    color: var(--ink-faint);
+    line-height: 1.8;
+    max-width: 46em;
+  }
+
+  @media (max-width: 560px) {
+    .hero { padding: 48px 0 64px; }
+    .tategaki { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="wordmark">Knowledge<span>Management</span></div>
+    <a class="home-link" href="../">← m-note トップ</a>
+  </div>
+</header>
+
+<div class="hero">
+  <svg class="ripples" viewBox="0 0 560 560" aria-hidden="true">
+    <circle cx="280" cy="280" r="270"></circle>
+    <circle cx="280" cy="280" r="270"></circle>
+    <circle cx="280" cy="280" r="270"></circle>
+  </svg>
+  <div class="wrap">
+    <div>
+      <p class="hero-eyebrow">Idea Environment Design</p>
+      <h1 class="serif">アイデアは才能ではなく、<br>環境から生まれる。</h1>
+      <p class="lede">自分がアイデアを思いつく状況を観察・分析し、「アイデアが生まれやすい環境」を再現可能な仕組みとして設計する。思いついた瞬間に話し、AIと育て、Obsidianに蓄積し、実行につなげる——そのための個人ナレッジマネジメントの記録。</p>
+    </div>
+    <div class="tategaki serif">問いと静けさ</div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">気付き</p>
+    <h2 class="serif">この問い自体が、散歩中に生まれた</h2>
+    <p class="muted">「アイデアはどんな時に生まれるのか?」——この問いを思いついたのは、朝の散歩の途中だった。</p>
+    <div class="observation">
+      <p class="serif">「アイデアが生まれる条件を考える」というアイデアもまた、<br>アイデアが生まれやすい環境の中で生まれている。</p>
+      <p class="note">仕組みそのものが自らの正しさを示している——これは重要な観察結果。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">場面</p>
+    <h2 class="serif">アイデアが生まれる六つのシーン</h2>
+    <p class="muted">現時点で確認できている、アイデアが浮かびやすい場面。水・歩行・熱と、静かな一人の時間が共通している。</p>
+    <div class="scenes">
+      <div class="scene"><b>朝の散歩</b><span>一定のリズムの歩行</span></div>
+      <div class="scene"><b>シャワー</b><span>水の音と温度</span></div>
+      <div class="scene"><b>湯船</b><span>力の抜けた身体</span></div>
+      <div class="scene"><b>泳いでいる時</b><span>反復する動作と呼吸</span></div>
+      <div class="scene"><b>サウナ後の外気浴</b><span>外気と心地良い刺激</span></div>
+      <div class="scene"><b>寝る前の瞑想</b><span>静かな頭の中</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">共通点</p>
+    <h2 class="serif">六つの場面に共通する条件(仮説)</h2>
+    <div class="commons">
+      <div class="common">
+        <h3>身体</h3>
+        <ul>
+          <li>一定のリズムで動いている</li>
+          <li>力みがない</li>
+          <li>呼吸が自然</li>
+        </ul>
+      </div>
+      <div class="common">
+        <h3>脳</h3>
+        <ul>
+          <li>認知負荷が低い</li>
+          <li>判断をしていない</li>
+          <li>考えようとしていない</li>
+          <li>頭の中が静か</li>
+        </ul>
+      </div>
+      <div class="common">
+        <h3>感覚</h3>
+        <ul>
+          <li>水の音・温度・外気</li>
+          <li>自然な呼吸</li>
+          <li>心地良い刺激だけが存在する</li>
+        </ul>
+      </div>
+      <div class="common">
+        <h3>環境</h3>
+        <ul>
+          <li>一人でいる</li>
+          <li>時間に追われていない</li>
+          <li>スマホを見ていない</li>
+          <li>情報入力が止まっている</li>
+        </ul>
+      </div>
+    </div>
+    <div class="thought-note">
+      <b>思考について</b> — 完全に何も考えていない訳ではない。<b>未解決の問いだけが頭の片隅に残っている。</b>この状態で思考を止めると、無意識が勝手に組み合わせ始めるのではないか。
+    </div>
+  </div>
+</section>
+
+<section class="hypothesis">
+  <div class="wrap">
+    <p class="eyebrow">仮説</p>
+    <div class="formula serif">問い<span class="x">×</span>静けさ</div>
+    <p class="sub">アイデアはこの掛け算から生まれる可能性がある。情報を増やして考える時間ではなく、考えることを止めた時に、統合が始まる。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">プロセス</p>
+    <h2 class="serif">アイデア創出フロー</h2>
+    <p class="muted">問いを持つことから、実行まで。現在の10ステップ——後半は仕組みが自動で進める。</p>
+    <ol class="flow">
+      <li><b>問いを持つ</b><span>未解決の問いを頭の片隅に置いておく</span></li>
+      <li><b>情報収集</b><span>問いに関する材料を集める</span></li>
+      <li><b>身体を動かす</b><span>散歩・風呂・泳ぐ——リズムのある動きへ</span></li>
+      <li class="pivot"><b>思考を手放す</b><span>考えることを止め、無意識に委ねる</span></li>
+      <li><b>キーワードが浮かぶ</b><span>統合の結果が言葉として現れる</span></li>
+      <li><b>AIと壁打ちする</b><span>浮かんだ言葉をそのまま話す。ChatGPTでもClaudeでもどれでも</span></li>
+      <li><b>アイデアを広げる</b><span>対話の中で構造化・展開する</span></li>
+      <li><b>2タップで保存</b><span>コピーして「アイデアを保存」——01_Inbox へ着地</span></li>
+      <li><b>夜のうちに自動整形</b><span>タイトル・タグ・関連リンクが付いて Notes へ移動</span></li>
+      <li><b>日曜朝に選んで実行</b><span>北極星と照合し、チェック1つでプロジェクト化</span></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">役割分担</p>
+    <h2 class="serif">自分は生活し、AIが整える</h2>
+    <div class="roles">
+      <div class="role">
+        <h3>自分</h3>
+        <div class="tag">生活の中で生み出し、決める</div>
+        <ul>
+          <li>問いを持つ</li>
+          <li>生活する</li>
+          <li>アイデアを話す</li>
+          <li>日曜にチェックを付ける</li>
+          <li>実行する</li>
+        </ul>
+      </div>
+      <div class="role">
+        <h3>AI</h3>
+        <div class="tag">対話で広げ、裏で整える</div>
+        <ul>
+          <li>壁打ち相手(ChatGPT・Claude どれでも)</li>
+          <li>思考の整理と仮説の構造化</li>
+          <li>夜間の自動整形——タイトル・タグ・リンク</li>
+          <li>週次レビューの下ごしらえ</li>
+          <li>チェックされたアイデアのプロジェクト化</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">仕組み</p>
+    <h2 class="serif">浮かんだ瞬間から、実行まで自動で流れる</h2>
+    <div class="system">
+      <div class="phone">
+        <div class="btn">アイデアを<br>話す</div>
+        <div class="btn ghost">アイデアを<br>保存</div>
+        <div class="cap">iPhone ホーム画面</div>
+      </div>
+      <div class="system-copy">
+        <p>入口はiPhoneのホーム画面に置いた2つのショートカット。<b>「アイデアを話す」</b>でAIとの会話を即開始し、<b>「アイデアを保存」</b>で会話の内容をコピーからの2タップでObsidianの <b>01_Inbox</b> へ放り込む。</p>
+        <p>その先は自動。<b>毎晩の整形ジョブ</b>が生テキストにタイトル・タグ・関連ノートへのリンクを付けてNotesへ移し、<b>毎週日曜朝のレビュージョブ</b>が新しいアイデアを「実現したいこと(北極星)」と照合して、進める価値のあるTop3を最初の一歩付きで提案する。</p>
+        <p>アイデアが浮かんだ瞬間と記録の間、そして記録と実行の間にある摩擦を、限りなくゼロに近づける。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">運用ループ</p>
+    <h2 class="serif">手を動かすのは4箇所だけ</h2>
+    <p class="muted">アイデアが生まれてから実行され、その学びが次のアイデアの材料に戻るまでが一つの循環になっている。自分の手数は、話す・2タップ・チェック1つ・実行の4つだけ。</p>
+    <div class="loop-grid">
+      <div class="loop-step"><span class="who you">あなた</span><b>① アイデアが浮かぶ</b><span>問いと静けさ。散歩・風呂・瞑想</span></div>
+      <div class="loop-step"><span class="who you">あなた</span><b>② 2タップで保存</b><span>どのAIとの対話でもInboxへ</span></div>
+      <div class="loop-step"><span class="who auto">自動</span><b>③ 夜間に整形</b><span>タイトル・タグ・リンクを付けてNotesへ</span></div>
+      <div class="loop-step"><span class="who you">あなた</span><b>④ 日曜朝に選ぶ</b><span>北極星と照合された提案にチェック1つ</span></div>
+      <div class="loop-step"><span class="who auto">自動</span><b>⑤ プロジェクト化</b><span>目的・完了条件・最初の一歩(15分)付き</span></div>
+      <div class="loop-step"><span class="who you">あなた</span><b>⑥ 実行して形に残す</b><span>洞察はNotesへ還流し、次の問いになる</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">器</p>
+    <h2 class="serif">7つのフォルダと、迷わない命名</h2>
+    <p class="muted">フォルダは「内容」ではなく「状態」で分ける。内容による分類はタグと [[リンク]] に任せる。保存先を人が選ぶ場面をなくすのが目的。</p>
+    <ul class="folders">
+      <li><code>00_Home</code><span>北極星 — Home・Constitution・目標。「見る」場所</span></li>
+      <li><code>01_Inbox</code><span>自動で入ってくる場所。常にほぼ空が正常</span></li>
+      <li><code>02_Notes</code><span>知識・洞察・問いの本体。「内容で探す」ならここ</span></li>
+      <li><code>03_Projects</code><span>実行するもの。「完了条件がある」ならここ</span></li>
+      <li><code>04_Journal</code><span>日記・週次レビュー。「日付で探す」ならここ</span></li>
+      <li><code>05_Resources</code><span>PDFなど読む素材の置き場</span></li>
+      <li><code>99_System</code><span>テンプレート・ログ・Archive。普段は見ない</span></li>
+    </ul>
+    <div class="thought-note">
+      <b>命名規則</b> — Notesは内容を表す短い名詞句(30字以内・番号や日付を付けない)。Projectsは「〜する」で終わる動詞句。Journalは <b>YYYY-MM-DD</b>。Inboxの自動保存名は触らない(夜間ジョブが命名し直す)。自分で名前を考えるのは、実質プロジェクトに動詞で名前を付ける時だけ。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">実現できる状態</p>
+    <h2 class="serif">この仕組みが可能にすること</h2>
+    <div class="scenes">
+      <div class="scene"><b>アイデアを失わない</b><span>浮かんだ瞬間に確保される。「あとでまとめよう」が消える</span></div>
+      <div class="scene"><b>頭の中を空けておける</b><span>覚える・整理するを仕組みに預け、頭には問いだけを残す。静けさが保たれ、次のアイデアが生まれやすくなる</span></div>
+      <div class="scene"><b>分類する仕事が消える</b><span>朝には整い、過去のノートと自動でリンクされる。アイデアの結合が毎晩起こる</span></div>
+      <div class="scene"><b>集めて終わらない</b><span>すべてのアイデアが北極星と照合され、チェック1つで実行が始まる。判断は週10分だけ</span></div>
+      <div class="scene"><b>複利で育つ</b><span>実行の学びが還流し、vaultが濃くなるほど提案も賢くなる。「形に残す」ための素材庫が育つ</span></div>
+      <div class="scene"><b>未来の自分への贈り物</b><span>Constitution第七条が、毎晩自動で動く仕組みになった</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">出口</p>
+    <h2 class="serif">vaultで育ち、地図になり、人に届く</h2>
+    <p class="muted">蓄積したアイデアの出口はホームページ。記事を並べるブログではなく、思考全体を俯瞰できる「思考のOS」——世界を探索する地図として育てていく。まず森(全体像)を見せ、その後に木(記事)へ入る。</p>
+    <div class="scenes">
+      <div class="scene"><b>俯瞰できる</b><span>地図として一望した瞬間、繋がっていない場所・薄い場所が見える。ブラッシュアップの対象が視覚化される</span></div>
+      <div class="scene"><b>説明が理解の試験になる</b><span>他人に説明できる形にすること自体が、自分の理解を測るテスト。説明できない部分=理解が浅い部分</span></div>
+      <div class="scene"><b>人への窓口になる</b><span>思考が見える形で公開されていると、同じ問いを持つ人が見つけてくれる。vaultは私的な源泉、ホームページは公開された窓口</span></div>
+    </div>
+    <div class="thought-note">
+      <b>全体の流れ</b> — 散歩で生まれ、vaultで育ち、ホームページで形になり、人に届く。「人が喜ぶものを形に残す」と「素敵な人達に囲まれる」に同時に効く出口。トップページは4つの森——世界を理解する/自分を理解する/創る/人生——から始まる地図にしていく。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">これから</p>
+    <h2 class="serif">深掘りしたいテーマ</h2>
+    <ul class="themes">
+      <li><span class="q">Q1</span>なぜ水に触れている時にアイデアが生まれやすいのか</li>
+      <li><span class="q">Q2</span>なぜ歩行中は思考が整理されるのか</li>
+      <li><span class="q">Q3</span>Default Mode Network(DMN)との関係</li>
+      <li><span class="q">Q4</span>認知負荷と創造性の関係</li>
+      <li><span class="q">Q5</span>無意識はどのように情報を統合しているのか</li>
+      <li><span class="q">Q6</span>「問い」の質によってアイデアの質は変わるのか</li>
+      <li><span class="q">Q7</span>アイデア創出プロセスを体系化できるか</li>
+    </ul>
+    <div class="thought-note" style="margin-top: 24px;">
+      <b>北極星から出てきた次の問い</b> — 「形に残す」の形とは何か(文章・ソフトウェア・講演・仕組み?)/「素敵な人」とはどんな人で、どこで出会うのか/「社会に貢献」の対象は誰か。答えはたぶん、次の散歩の中にある。
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>KnowledgeManagement — アイデアが生まれる環境の設計</div>
+    <div><a href="../">m-note トップ</a> ・ 問い × 静けさ</div>
+  </div>
+  <div class="wrap">
+    <p class="disc">専門家ではない個人が、自分の観察と実践をもとにまとめた個人的なノートです。内容の正確性を保証するものではありません。</p>
+  </div>
+</footer>
+
+</body>
+</html>
